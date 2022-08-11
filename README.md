@@ -1,6 +1,9 @@
 # RapidAI Front-End Engineer Take home Assignment
 
 ## Ben's Developer Notes
+
+ Code is available on [on GitHub](https://github.com/bensilverman/sliderbar) at [https://github.com/bensilverman/sliderbar](https://github.com/bensilverman/sliderbar)
+
 I've created an ES6 module named [sliderBar](src/sliderbar.ts) in Typescript -- built using [an NPM config](package.json), transpiled using rollup. and using [LESS](src/sliderbar.less) as a CSS preprocessor. 
 
 To install: 
