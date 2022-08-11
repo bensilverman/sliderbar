@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!--
+Please implement slider bar which behaves and looks like as seen in the attached video,
+using HTML/CSS/JavaScript but without using <input type="range">.
+
+container background color: #313131
+track height: 6px
+track width: 500px
+tick width: 2px
+tick height: 16px
+track and ticks color: #565656
+thumb size: 40px diameter
+thumb color: #ffffff
+-->
+<html>
+  <head>
+    <title>ischemaview sliderbar</title>
+    <script src="dist/sliderbar.js"></script>
+    <link rel="stylesheet" href="dist/sliderbar.min.css"></link>
+    <script>
+      window.addEventListener('load',() => { 
+        
+        // get pertinent DOM elements to pass into sliderbar domElements config param
+        const domElements = Object.assign( {}, ...['container','track','thumb'].map(ele => {
+          return { [ele] : document.querySelector(`.${ele}`) };
+        }));
+
+        // build sliderbar config params
+        const sliderBarConfig = {
+          domElements,
+          range: {
+            min: 0,
+            max: 10,
+            step: 1, 
+          },
+          value: 0
+        }
+
+        const sliderBarDemo = new sliderBar(sliderBarConfig);
+
+        /* to interact with slider bar, available setValue method & value property
+          sliderBarDemo.setValue(4);
+          const sliderBarValue = sliderBarDemo.value
+        */
+
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="track">
+        <div class="thumb"></div>
+      </div>
+    </div>
+  </body>
+</html>
