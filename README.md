@@ -60,26 +60,6 @@ const currentValue = sliderBar.value;
 
 ```
 
-## Objective
-Your objective is to implement a slider bar UI, with uniform tick marks that can be selected like the example shown in the video included in this folder.  
-
-Note: if you can't play .mov files, 
-you can use this [hosted gif instead](https://github.com/ischemaview/rapid-interview/blob/master/cloud-team/front-end/ischemaview_sliderbar.gif)
-
-Please add your code to the HTML, CSS and JavaScript files provided in this file. You can add additional files if needed.
-
-## Timing
-Most candidates spend around 4 hours in total on this assignment. Please try to return this assessment to us within a couple of days.
-
-## Important Notes
-* We will try to run your solution so it must work, must solve the problem and must not contain bugs
-* Please avoid using 3rd party slider bar plugins and libraries, we want to see that you're capable of building UI components from scratch. 
-* Please don't use `<input type=range>` in your solution, simply because that's too easy. We want to challenge you with this assignment.
-* Code quality is important to us, so please show us that you have a good sense of style, consistency and attention to detail in your code.
-* Please don't use a framework (e.g. Angular or React). Even though we use Angular heavily here, this assignment is specifically for testing your knowledge of JS, HTML and CSS fundamentals.
-* Less is more - we are more impressed with simple, efficient and clean solutions than a large sprawling codebase, but do take care to handle edge cases elegantly.
-
-
 
 
 
