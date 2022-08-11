@@ -1,6 +1,6 @@
-# RapidAI Front-End Engineer Take home Assignment
+# Front-End Engineer Assignment
 
-## Ben's Developer Notes
+## Developer Notes
 
  Code is available on [on GitHub](https://github.com/bensilverman/sliderbar) at [https://github.com/bensilverman/sliderbar](https://github.com/bensilverman/sliderbar)
 
