@@ -149,23 +149,21 @@ class sliderBar {
         });
 
         let active = false;
-        // click on track directly
-        track.addEventListener('mousedown',(e) => {
-            if (e.target != e.currentTarget) return;
-            active = true;
-            this.setValue(this.translateXToVal(e.offsetX));
-        });
-
-        // click on container 
-        container.addEventListener('mousedown',(e) => {
-            if (e.target != e.currentTarget) return;
-            active = true;
-            this.setValue(this.translateXToVal(e.offsetX - thumb.offsetWidth));
-        });
-
+        
         // thumb drag handling
         let dragValue: any = null;
-        const dragStart   = (e) => { active = [thumb, container, track].includes(e.target) || e.target.classList.contains('tick'); };
+        const dragStart   = (e) => { 
+            active = [thumb, container, track].includes(e.target) || e.target.classList.contains('tick'); 
+
+            if (e.target == container) {
+                this.setValue(this.translateXToVal(e.offsetX - thumb.offsetWidth));
+            }
+
+            if (e.target == track) {
+                this.setValue(this.translateXToVal(e.offsetX));
+            }
+        }
+
         const dragEnd     = (e) => { 
             
             // snap value to nearest tick 
@@ -177,7 +175,7 @@ class sliderBar {
             // restore defaults
             if (!snap) thumb.classList.add('smooth');
             active = false; 
-        }
+        };
 
         const drag = (e) => {
             if (!active) return;
@@ -196,21 +194,20 @@ class sliderBar {
             dragValue = this.translateXToVal(thumbX + (thumbOffset / 2));
 
             // move thumb on drag
-
             if (snap) return this.snapThumb(dragValue);
             
             thumb.style.left = `${thumbX}px`;
             this.highlightLabel(dragValue);
 
-        }
+        };
 
         // assign listeners, mobile and web
-        container.addEventListener("touchstart", dragStart, true);
-        container.addEventListener("touchend", dragEnd, true);
-        container.addEventListener("touchmove", drag, true);
+        window.addEventListener("touchstart", dragStart, true);
+        window.addEventListener("touchend", dragEnd, true);
+        window.addEventListener("touchmove", drag, true);
 
         window.addEventListener("mousedown", dragStart, false);
-        [window,container].forEach(ele => { addEventListener("mouseup", dragEnd, false) });
+        window.addEventListener("mouseup", dragEnd, false);
         window.addEventListener("mousemove", drag, true);
 
         return this;
