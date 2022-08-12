@@ -14,8 +14,9 @@ thumb color: #ffffff
 -->
 <html>
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ischemaview sliderbar</title>
-    <script src="dist/sliderbar.js"></script>
+    <script src="dist/sliderbar.min.js"></script>
     <link rel="stylesheet" href="dist/sliderbar.min.css"></link>
     <script>
       window.addEventListener('load',() => { 
@@ -33,7 +34,8 @@ thumb color: #ffffff
             max: 10,
             step: 1, 
           },
-          value: 0
+          value: 0,
+          snap: true
         }
 
         const sliderBarDemo = new sliderBar(sliderBarConfig);

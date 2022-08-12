@@ -47,7 +47,8 @@ const sliderBar = new sliderBar({
         max: 10, /* right-most numeric value */
         step: 1 /* numeric tick interval */
     },
-    value: 0 /* default value */
+    value: 0, /* default value of slider */
+    snap: true /* if false, slider moves in a fluid motion instead of snapped to tick */  
 });
 
 

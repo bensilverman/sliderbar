@@ -5,7 +5,8 @@ type Config = {
         thumb: HTMLElement
     }
     range: Range,
-    value: number
+    value: number,
+    snap: boolean
 }
 
 type Range = {
@@ -28,16 +29,18 @@ class sliderBar {
     thumb: HTMLElement;
     ticks: Array<Tick> = [];
     value: number;
+    snap: boolean;
 
     constructor(config: Config) {
-        const { range, domElements: { container, track, thumb }, value } = config;
+        const { range, domElements: { container, track, thumb }, value, snap } = config;
         
         Object.assign(this,{
             container,
             track,
             thumb,
             range,
-            value: value ?? range.min
+            value: value ?? range.min,
+            snap: snap ?? true
         });
 
         new Promise((res) => {
@@ -111,7 +114,7 @@ class sliderBar {
 
     // add necessary widths & margins with space for thumb on edges
     adjustContainer() {
-        const { container, track, thumb } = this;
+        const { container, track, thumb, snap } = this;
         
         const thumbWidth = thumb.offsetWidth;
 
@@ -119,11 +122,15 @@ class sliderBar {
         track.style.marginLeft = `${thumbWidth / 2}px`;
 
         container.setAttribute('tabIndex','1');
+
+        /* add smooth motion transition class if needed */
+        if (!snap) thumb.classList.add('smooth');
+
     }
 
     thumbEvents() {
 
-        const { container, track, thumb } = this;
+        const { container, track, thumb, snap } = this;
 
         // WCAG compliance, arrow key listeners
         let containerFocus = false;
@@ -158,7 +165,6 @@ class sliderBar {
 
         // thumb drag handling
         let dragValue: any = null;
-        const thumbTransition = thumb.style.transition;
         const dragStart   = (e) => { active = [thumb, container, track].includes(e.target) || e.target.classList.contains('tick'); };
         const dragEnd     = (e) => { 
             
@@ -169,13 +175,13 @@ class sliderBar {
             }
 
             // restore defaults
-            thumb.style.transition = thumbTransition;
+            if (!snap) thumb.classList.add('smooth');
             active = false; 
         }
 
         const drag = (e) => {
             if (!active) return;
-            thumb.style.transition = 'none';
+            if (!snap) thumb.classList.remove('smooth');
             
             // get thumb X pos
             const eventX = (e.type === "touchmove") ? e.touches[0].clientX : e.clientX;
@@ -184,13 +190,16 @@ class sliderBar {
             // constrain movement to track
             const thumbOffset = thumb.offsetWidth/2;
             thumbX = Math.min(Math.max(thumbX, -thumbOffset), track.offsetWidth-thumbOffset);
-
-            // move thumb on drag
-            thumb.style.left = `${thumbX}px`;
             
             // assign value as dragged; label highlights on drag
             // TODO: better precision by setting value when left or right of thumb hits tick boundary
             dragValue = this.translateXToVal(thumbX + (thumbOffset / 2));
+
+            // move thumb on drag
+
+            if (snap) return this.snapThumb(dragValue);
+            
+            thumb.style.left = `${thumbX}px`;
             this.highlightLabel(dragValue);
 
         }

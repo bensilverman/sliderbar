@@ -10,13 +10,14 @@
     class sliderBar {
         constructor(config) {
             this.ticks = [];
-            const { range, domElements: { container, track, thumb }, value } = config;
+            const { range, domElements: { container, track, thumb }, value, snap } = config;
             Object.assign(this, {
                 container,
                 track,
                 thumb,
                 range,
-                value: value ?? range.min
+                value: value ?? range.min,
+                snap: snap ?? true
             });
             new Promise((res) => {
                 this.createTicks().adjustContainer();
@@ -63,14 +64,16 @@
             return this;
         }
         adjustContainer() {
-            const { container, track, thumb } = this;
+            const { container, track, thumb, snap } = this;
             const thumbWidth = thumb.offsetWidth;
             container.style.width = `${track.offsetWidth + thumbWidth}px`;
             track.style.marginLeft = `${thumbWidth / 2}px`;
             container.setAttribute('tabIndex', '1');
+            if (!snap)
+                thumb.classList.add('smooth');
         }
         thumbEvents() {
-            const { container, track, thumb } = this;
+            const { container, track, thumb, snap } = this;
             let containerFocus = false;
             container.addEventListener('focus', () => containerFocus = true, true);
             container.addEventListener('blur', () => containerFocus = false, true);
@@ -100,26 +103,29 @@
                 this.setValue(this.translateXToVal(e.offsetX - thumb.offsetWidth));
             });
             let dragValue = null;
-            const thumbTransition = thumb.style.transition;
             const dragStart = (e) => { active = [thumb, container, track].includes(e.target) || e.target.classList.contains('tick'); };
             const dragEnd = (e) => {
                 if (active && dragValue !== null) {
                     this.setValue(dragValue);
                     dragValue = null;
                 }
-                thumb.style.transition = thumbTransition;
+                if (!snap)
+                    thumb.classList.add('smooth');
                 active = false;
             };
             const drag = (e) => {
                 if (!active)
                     return;
-                thumb.style.transition = 'none';
+                if (!snap)
+                    thumb.classList.remove('smooth');
                 const eventX = (e.type === "touchmove") ? e.touches[0].clientX : e.clientX;
                 let thumbX = eventX - (thumb.offsetWidth) - container.offsetLeft;
                 const thumbOffset = thumb.offsetWidth / 2;
                 thumbX = Math.min(Math.max(thumbX, -thumbOffset), track.offsetWidth - thumbOffset);
-                thumb.style.left = `${thumbX}px`;
                 dragValue = this.translateXToVal(thumbX + (thumbOffset / 2));
+                if (snap)
+                    return this.snapThumb(dragValue);
+                thumb.style.left = `${thumbX}px`;
                 this.highlightLabel(dragValue);
             };
             container.addEventListener("touchstart", dragStart, true);

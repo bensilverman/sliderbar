@@ -58,5 +58,7 @@ body {
   border-radius: 20px;
   background-color: #ffffff;
   z-index: 2;
+}
+.thumb.smooth {
   transition: left 0.1s;
 }
