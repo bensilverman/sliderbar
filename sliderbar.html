@@ -35,24 +35,42 @@ thumb color: #ffffff
             step: 1, 
           },
           value: 0,
-          snap: true
+          snap: true,
+          onDrag: (val) => {
+            document.getElementById('drag_info').style.display = 'inline';
+            document.getElementById('drag_value').innerHTML = val;
+          },
+          onUpdated: (val) => {
+            document.getElementById('drag_info').style.display = 'none';
+            document.getElementById('updated_value').value = val;
+          }
         }
 
         const sliderBarDemo = new sliderBar(sliderBarConfig);
 
-        /* to interact with slider bar, available setValue method & value property
-          sliderBarDemo.setValue(4);
-          const sliderBarValue = sliderBarDemo.value
-        */
+        // update from input
+        window.updateSliderBarVal = (val) => {
+          sliderBarDemo.setValue(Math.round(val));
+        }
 
       });
     </script>
   </head>
   <body>
+
+
     <div class="container">
       <div class="track">
         <div class="thumb"></div>
       </div>
     </div>
+
+    <div style="padding:50px 10px;">
+      Slider value = <input type="number" step="1" style="font-size:24px;width:40px;border-radius:10px;padding:5px;" id="updated_value" value="0" onInput="updateSliderBarVal(this.value)"> <span id="drag_info" style="display: none;"> / Dragged value = <span id="drag_value"></span></span><br>
+    </div>
+
+
+
+
   </body>
 </html>

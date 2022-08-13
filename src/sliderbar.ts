@@ -6,7 +6,9 @@ type Config = {
     }
     range: Range,
     value: number,
-    snap: boolean
+    snap: boolean,
+    onDrag?: Function,
+    onUpdated?: Function
 }
 
 type Range = {
@@ -30,28 +32,64 @@ class sliderBar {
     ticks: Array<Tick> = [];
     value: number;
     snap: boolean;
+    onDrag: Function;
+    onUpdated: Function;
 
     constructor(config: Config) {
-        const { range, domElements: { container, track, thumb }, value, snap } = config;
+        const { range, domElements, domElements: { container, track, thumb }, value, snap, onDrag, onUpdated } = this.validateDefaults(config);
         
         Object.assign(this,{
             container,
             track,
             thumb,
             range,
-            value: value ?? range.min,
-            snap: snap ?? true
+            value,
+            snap,
+            onDrag,
+            onUpdated
         });
 
-        new Promise((res) => {
+        new Promise((res,rej) => {
             // setup DOM elements
             this.createTicks().adjustContainer()
             res(this);
         }).then(() => {
             // then drag events and defaults
             this.thumbEvents().snapThumb(this.value);
+        }).catch((err) => {
+            throw new Error(err);
+        })
+
+    }
+
+    // define defaults and validate range values... 
+    // insure steps don't exceed range & min isn't out of bounds
+    validateDefaults(config) {
+        const { domElements, range, value, snap, onDrag, onUpdated } = config;
+
+        //insure DOM elements exist in config & HTML
+        const domElementDefaults = {
+            container: domElements?.container ?? document.querySelector('.container'),
+            track: domElements?.track ?? document.querySelector('.track'),
+            thumb: domElements?.thumb ?? document.querySelector('.thumb')
+        };
+        
+        Object.entries(domElementDefaults).forEach(ele => {
+            if (!ele[1]) throw new Error(`domElement for ${ele[0]} not found`);
         });
 
+        return {
+            domElements: domElementDefaults,
+            range: {
+                min: range?.min ?? 0,
+                max: range?.max ?? 10,
+                step: (range?.step && range?.step < range?.max - range?.min ? range?.step : null) ?? 1
+            },
+            value: (value >= range?.min ? value : null) ?? range?.min ?? 0,
+            snap: snap ?? true,
+            onDrag: onDrag ?? function() { return; },
+            onUpdated: onUpdated ?? function() { return; }
+        }
     }
 
     // create ticks & labels and add to DOM
@@ -81,11 +119,6 @@ class sliderBar {
             track.appendChild(tickEle);
             const tickLeft = tick.left - (tickEle.offsetWidth / 2);
             tickEle.style.marginLeft = `${tickLeft}px`;
-
-            // assign click events to ticks
-            tickEle.addEventListener('mousedown',() => {
-                this.setValue(tick.value);
-            });
 
             // create labels
             const labelEle = document.createElement('div');
@@ -130,7 +163,7 @@ class sliderBar {
 
     thumbEvents() {
 
-        const { container, track, thumb, snap } = this;
+        const { container, track, thumb, snap, onDrag, onUpdated } = this;
 
         // WCAG compliance, arrow key listeners
         let containerFocus = false;
@@ -164,7 +197,7 @@ class sliderBar {
             }
         }
 
-        const dragEnd     = (e) => { 
+        const dragEnd = (e) => { 
             
             // snap value to nearest tick 
             if (active && dragValue !== null) {
@@ -192,12 +225,16 @@ class sliderBar {
             // assign value as dragged; label highlights on drag
             // TODO: better precision by setting value when left or right of thumb hits tick boundary
             dragValue = this.translateXToVal(thumbX + (thumbOffset / 2));
+            
+            
+            onDrag(dragValue, this);
 
             // move thumb on drag
             if (snap) return this.snapThumb(dragValue);
-            
+     
             thumb.style.left = `${thumbX}px`;
             this.highlightLabel(dragValue);
+
 
         };
 
@@ -246,11 +283,12 @@ class sliderBar {
 
     // can be called from elsewhere outside of class
     setValue(sliderValue: number) {
-        const { range: { min, max } } = this;
+        const { range: { min, max }, onUpdated } = this;
 
         // constrain value to range
         this.value = Math.min(Math.max(sliderValue, min), max);
         this.snapThumb(this.value);
+        onUpdated(this.value, this);
     }
 
 }
