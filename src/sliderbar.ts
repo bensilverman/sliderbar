@@ -36,7 +36,7 @@ class sliderBar {
     onUpdated: Function;
 
     constructor(config: Config) {
-        const { range, domElements, domElements: { container, track, thumb }, value, snap, onDrag, onUpdated } = this.validateDefaults(config);
+        const { range, domElements: { container, track, thumb }, value, snap, onDrag, onUpdated } = this.validateDefaults(config);
         
         Object.assign(this,{
             container,
