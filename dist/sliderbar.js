@@ -21,7 +21,7 @@
                 onDrag,
                 onUpdated
             });
-            new Promise((res, rej) => {
+            new Promise((res) => {
                 this.createTicks().adjustContainer();
                 res(this);
             }).then(() => {
@@ -98,7 +98,7 @@
                 thumb.classList.add('smooth');
         }
         thumbEvents() {
-            const { container, track, thumb, snap, onDrag, onUpdated } = this;
+            const { container, track, thumb, snap, onDrag } = this;
             let containerFocus = false;
             container.addEventListener('focus', () => containerFocus = true, true);
             container.addEventListener('blur', () => containerFocus = false, true);

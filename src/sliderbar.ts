@@ -49,7 +49,7 @@ class sliderBar {
             onUpdated
         });
 
-        new Promise((res,rej) => {
+        new Promise((res) => {
             // setup DOM elements
             this.createTicks().adjustContainer()
             res(this);
@@ -163,7 +163,7 @@ class sliderBar {
 
     thumbEvents() {
 
-        const { container, track, thumb, snap, onDrag, onUpdated } = this;
+        const { container, track, thumb, snap, onDrag } = this;
 
         // WCAG compliance, arrow key listeners
         let containerFocus = false;
