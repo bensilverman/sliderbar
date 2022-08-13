@@ -19,11 +19,15 @@ thumb color: #ffffff
     <script src="dist/sliderbar.min.js"></script>
     <link rel="stylesheet" href="dist/sliderbar.min.css"></link>
     <script>
+
+      // shortcutter DOM selector
+      const _$ = (selector) => { return document.querySelector(selector); }
+
       window.addEventListener('load',() => { 
         
         // get pertinent DOM elements to pass into sliderbar domElements config param
         const domElements = Object.assign( {}, ...['container','track','thumb'].map(ele => {
-          return { [ele] : document.querySelector(`.${ele}`) };
+          return { [ele] : _$(`.${ele}`) };
         }));
 
         // build sliderbar config params
@@ -37,12 +41,11 @@ thumb color: #ffffff
           value: 0,
           snap: true,
           onDrag: (val) => {
-            document.getElementById('drag_info').style.display = 'inline';
-            document.getElementById('drag_value').innerHTML = val;
+            _$('#drag_info').innerText = `[Drag value = ${val}]`;
           },
           onUpdated: (val) => {
-            document.getElementById('drag_info').style.display = 'none';
-            document.getElementById('updated_value').value = val;
+            _$('#drag_info').innerText = '';
+            _$('#updated_value').value = val;
           }
         }
 
@@ -66,7 +69,7 @@ thumb color: #ffffff
     </div>
 
     <div style="padding:50px 10px;">
-      Slider value = <input type="number" step="1" style="font-size:24px;width:40px;border-radius:10px;padding:5px;" id="updated_value" value="0" onInput="updateSliderBarVal(this.value)"> <span id="drag_info" style="display: none;"> / Dragged value = <span id="drag_value"></span></span><br>
+      Slider value = <input type="number" step="1" style="font-size:24px;width:40px;border-radius:10px;padding:5px;" id="updated_value" value="0" onInput="updateSliderBarVal(this.value)"> <span id="drag_info"></span><br>
     </div>
 
 
