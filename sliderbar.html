@@ -18,16 +18,62 @@ thumb color: #ffffff
     <title>ischemaview sliderbar</title>
     <script src="dist/sliderbar.min.js"></script>
     <link rel="stylesheet" href="dist/sliderbar.min.css"></link>
+    <style>
+      /* style for demo only */
+      [q_model=sliderValue] {
+        font-size: 24px;
+        width: 40px;
+        border-radius: 10px;
+        padding: 5px;
+      }
+      /* default hidden before q_if evaluated */
+      [q_if] {
+        visibility: hidden;
+      }
+    </style>
     <script>
 
-      // shortcutter DOM selector
-      const _$ = (selector) => { return document.querySelector(selector); }
+      const defaultValue = 0;
 
-      window.addEventListener('load',() => { 
+      // _$$: jQuery-ish selector shortcut
+      const _$$ = (selector) => { return document.querySelectorAll(selector); }
+
+      //ProxRox: simple home-brewed data-binding proxy with hooks to DOM-declarative tags (a la Angular, Vue, etc)
+      class ProxRox {
+
+        constructor(defaults) {
+          return Object.assign(new Proxy({}, this.proxyTraps()),defaults);
+        }
         
+        proxyTraps() {
+          return {
+            set(target, prop, value) {
+              // q_model, binds value to DOM
+              _$$(`[q_model="${prop}"]`).forEach((bindEle) => { bindEle.nodeName == 'INPUT' ? bindEle.value = value : bindEle.innerText = value; });
+
+              // q_if, simple show/hide on prop existing
+              _$$(`[q_if="${prop}"]`).forEach((ifEle) => ifEle.style.visibility = value ? 'visible' : 'hidden');
+              
+              // Reflection allows object access to [set] proxy trap 
+              return Reflect.set(target, prop, value);
+            }
+          }
+        }
+      
+      }
+
+      // load everything up
+      window.addEventListener('load',() => { 
+
+        // create binding scope with defaults
+        const scope = new ProxRox({
+          sliderValue: defaultValue,
+          dragValue: null
+        })
+
         // get pertinent DOM elements to pass into sliderbar domElements config param
         const domElements = Object.assign( {}, ...['container','track','thumb'].map(ele => {
-          return { [ele] : _$(`.${ele}`) };
+          return { [ele] : _$$(`.${ele}`)[0] };
         }));
 
         // build sliderbar config params
@@ -38,20 +84,23 @@ thumb color: #ffffff
             max: 10,
             step: 1, 
           },
-          value: 0,
+          value: defaultValue,
           snap: true,
           onDrag: (val) => {
-            _$('#drag_info').innerText = `[Drag value = ${val}]`;
+            scope.dragValue = val;
           },
           onUpdated: (val) => {
-            _$('#drag_info').innerText = '';
-            _$('#updated_value').value = val;
+            Object.assign(scope,{
+              dragValue: null,
+              sliderValue: val
+            });
           }
         }
 
+        // sliderBar instance
         const sliderBarDemo = new sliderBar(sliderBarConfig);
 
-        // update from input
+        // update handler from input change
         window.updateSliderBarVal = (val) => {
           sliderBarDemo.setValue(Math.round(val));
         }
@@ -60,20 +109,14 @@ thumb color: #ffffff
     </script>
   </head>
   <body>
-
-
     <div class="container">
       <div class="track">
         <div class="thumb"></div>
       </div>
     </div>
-
     <div style="padding:50px 10px;">
-      Slider value = <input type="number" step="1" style="font-size:24px;width:40px;border-radius:10px;padding:5px;" id="updated_value" value="0" onInput="updateSliderBarVal(this.value)"> <span id="drag_info"></span><br>
+      Slider value = <input type="number" q_model="sliderValue" step="1" onInput="updateSliderBarVal(this.value)"> 
+      <span q_if="dragValue">[Drag value = <span q_model="dragValue"></span>]<br>
     </div>
-
-
-
-
   </body>
 </html>
