@@ -20,14 +20,14 @@ thumb color: #ffffff
     <link rel="stylesheet" href="dist/sliderbar.min.css"></link>
     <style>
       /* style for demo only */
-      [q_model=sliderValue] {
+      [pr_model=sliderValue] {
         font-size: 24px;
         width: 40px;
         border-radius: 10px;
         padding: 5px;
       }
-      /* default hidden before q_if evaluated */
-      [q_if] {
+      /* default hidden before pr_if evaluated */
+      [pr_if] {
         visibility: hidden;
       }
     </style>
@@ -48,11 +48,11 @@ thumb color: #ffffff
         proxyTraps() {
           return {
             set(target, prop, value) {
-              // q_model, binds value to DOM
-              _$$(`[q_model="${prop}"]`).forEach((bindEle) => { bindEle.nodeName == 'INPUT' ? bindEle.value = value : bindEle.innerText = value; });
+              // pr_model, binds value to DOM
+              _$$(`[pr_model="${prop}"]`).forEach((bindEle) => { bindEle.nodeName == 'INPUT' ? bindEle.value = value : bindEle.innerText = value; });
 
-              // q_if, simple show/hide on prop existing
-              _$$(`[q_if="${prop}"]`).forEach((ifEle) => ifEle.style.visibility = value ? 'visible' : 'hidden');
+              // pr_if, simple show/hide on prop existing
+              _$$(`[pr_if="${prop}"]`).forEach((ifEle) => ifEle.style.visibility = value ? 'visible' : 'hidden');
               
               // Reflection allows object access to [set] proxy trap 
               return Reflect.set(target, prop, value);
@@ -115,8 +115,8 @@ thumb color: #ffffff
       </div>
     </div>
     <div style="padding:50px 10px;">
-      Slider value = <input type="number" q_model="sliderValue" step="1" onInput="updateSliderBarVal(this.value)"> 
-      <span q_if="dragValue">[Drag value = <span q_model="dragValue"></span>]<br>
+      Slider value = <input type="number" pr_model="sliderValue" step="1" onInput="updateSliderBarVal(this.value)"> 
+      <span pr_if="dragValue">[Drag value = <span pr_model="dragValue"></span>]<br>
     </div>
   </body>
 </html>
