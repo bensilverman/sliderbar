@@ -18,12 +18,62 @@ thumb color: #ffffff
     <title>ischemaview sliderbar</title>
     <script src="dist/sliderbar.min.js"></script>
     <link rel="stylesheet" href="dist/sliderbar.min.css"></link>
+    <style>
+      /* style for demo only */
+      [pr_model=sliderValue] {
+        font-size: 24px;
+        width: 40px;
+        border-radius: 10px;
+        padding: 5px;
+      }
+      /* default hidden before pr_if evaluated */
+      [pr_if] {
+        visibility: hidden;
+      }
+    </style>
     <script>
-      window.addEventListener('load',() => { 
+
+      const defaultValue = 0;
+
+      // _$$: jQuery-ish selector shortcut
+      const _$$ = (selector) => { return document.querySelectorAll(selector); }
+
+      //ProxRox: simple home-brewed data-binding proxy with hooks to DOM-declarative tags (a la Angular, Vue, etc)
+      class ProxRox {
+
+        constructor(defaults) {
+          return Object.assign(new Proxy({}, this.proxyTraps()),defaults);
+        }
         
+        proxyTraps() {
+          return {
+            set(target, prop, value) {
+              // pr_model, binds value to DOM
+              _$$(`[pr_model="${prop}"]`).forEach((bindEle) => { bindEle.nodeName == 'INPUT' ? bindEle.value = value : bindEle.innerText = value; });
+
+              // pr_if, simple show/hide on prop existing
+              _$$(`[pr_if="${prop}"]`).forEach((ifEle) => ifEle.style.visibility = value ? 'visible' : 'hidden');
+              
+              // Reflection allows object access to [set] proxy trap 
+              return Reflect.set(target, prop, value);
+            }
+          }
+        }
+      
+      }
+
+      // load everything up
+      window.addEventListener('load',() => { 
+
+        // create binding scope with defaults
+        const scope = new ProxRox({
+          sliderValue: defaultValue,
+          dragValue: null
+        })
+
         // get pertinent DOM elements to pass into sliderbar domElements config param
         const domElements = Object.assign( {}, ...['container','track','thumb'].map(ele => {
-          return { [ele] : document.querySelector(`.${ele}`) };
+          return { [ele] : _$$(`.${ele}`)[0] };
         }));
 
         // build sliderbar config params
@@ -34,16 +84,26 @@ thumb color: #ffffff
             max: 10,
             step: 1, 
           },
-          value: 0,
-          snap: true
+          value: defaultValue,
+          snap: true,
+          onDrag: (val) => {
+            scope.dragValue = val;
+          },
+          onUpdated: (val) => {
+            Object.assign(scope,{
+              dragValue: null,
+              sliderValue: val
+            });
+          }
         }
 
+        // sliderBar instance
         const sliderBarDemo = new sliderBar(sliderBarConfig);
 
-        /* to interact with slider bar, available setValue method & value property
-          sliderBarDemo.setValue(4);
-          const sliderBarValue = sliderBarDemo.value
-        */
+        // update handler from input change
+        window.updateSliderBarVal = (val) => {
+          sliderBarDemo.setValue(Math.round(val));
+        }
 
       });
     </script>
@@ -53,6 +113,10 @@ thumb color: #ffffff
       <div class="track">
         <div class="thumb"></div>
       </div>
+    </div>
+    <div style="padding:50px 10px;">
+      Slider value = <input type="number" pr_model="sliderValue" step="1" onInput="updateSliderBarVal(this.value)"> 
+      <span pr_if="dragValue">[Drag value = <span pr_model="dragValue"></span>]<br>
     </div>
   </body>
 </html>

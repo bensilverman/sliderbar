@@ -1,7 +1,9 @@
 body {
   background-color: black;
+  color: white;
   font-family: sans-serif;
   padding: 100px;
+  overflow-x: hidden;
 }
 .container {
   display: flex;
@@ -15,6 +17,7 @@ body {
   cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
   outline: none;
 }
 .container:focus-visible {

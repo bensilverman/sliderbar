@@ -10,21 +10,49 @@
     class sliderBar {
         constructor(config) {
             this.ticks = [];
-            const { range, domElements: { container, track, thumb }, value, snap } = config;
+            const { range, domElements: { container, track, thumb }, value, snap, onDrag, onUpdated } = this.validateDefaults(config);
             Object.assign(this, {
                 container,
                 track,
                 thumb,
                 range,
-                value: value ?? range.min,
-                snap: snap ?? true
+                value,
+                snap,
+                onDrag,
+                onUpdated
             });
             new Promise((res) => {
                 this.createTicks().adjustContainer();
                 res(this);
             }).then(() => {
                 this.thumbEvents().snapThumb(this.value);
+            }).catch((err) => {
+                throw new Error(err);
             });
+        }
+        validateDefaults(config) {
+            const { domElements, range, value, snap, onDrag, onUpdated } = config;
+            const domElementDefaults = {
+                container: domElements?.container ?? document.querySelector('.container'),
+                track: domElements?.track ?? document.querySelector('.track'),
+                thumb: domElements?.thumb ?? document.querySelector('.thumb')
+            };
+            Object.entries(domElementDefaults).forEach(ele => {
+                if (!ele[1])
+                    throw new Error(`domElement for ${ele[0]} not found`);
+            });
+            return {
+                domElements: domElementDefaults,
+                range: {
+                    min: range?.min ?? 0,
+                    max: range?.max ?? 10,
+                    step: (range?.step && range?.step < range?.max - range?.min ? range?.step : null) ?? 1
+                },
+                value: (value >= range?.min ? value : null) ?? range?.min ?? 0,
+                snap: snap ?? true,
+                onDrag: onDrag ?? function () { return; },
+                onUpdated: onUpdated ?? function () { return; }
+            };
         }
         createTicks() {
             const { ticks, track, range: { min, max, step } } = this;
@@ -45,9 +73,6 @@
                 track.appendChild(tickEle);
                 const tickLeft = tick.left - (tickEle.offsetWidth / 2);
                 tickEle.style.marginLeft = `${tickLeft}px`;
-                tickEle.addEventListener('mousedown', () => {
-                    this.setValue(tick.value);
-                });
                 const labelEle = document.createElement('div');
                 labelEle.classList.add('label');
                 labelEle.setAttribute('tabIndex', '2');
@@ -73,7 +98,7 @@
                 thumb.classList.add('smooth');
         }
         thumbEvents() {
-            const { container, track, thumb, snap } = this;
+            const { container, track, thumb, snap, onDrag } = this;
             let containerFocus = false;
             container.addEventListener('focus', () => containerFocus = true, true);
             container.addEventListener('blur', () => containerFocus = false, true);
@@ -90,20 +115,16 @@
                 }
             });
             let active = false;
-            track.addEventListener('mousedown', (e) => {
-                if (e.target != e.currentTarget)
-                    return;
-                active = true;
-                this.setValue(this.translateXToVal(e.offsetX));
-            });
-            container.addEventListener('mousedown', (e) => {
-                if (e.target != e.currentTarget)
-                    return;
-                active = true;
-                this.setValue(this.translateXToVal(e.offsetX - thumb.offsetWidth));
-            });
             let dragValue = null;
-            const dragStart = (e) => { active = [thumb, container, track].includes(e.target) || e.target.classList.contains('tick'); };
+            const dragStart = (e) => {
+                active = [thumb, container, track].includes(e.target) || e.target.classList.contains('tick');
+                if (e.target == container) {
+                    this.setValue(this.translateXToVal(e.offsetX - thumb.offsetWidth));
+                }
+                if (e.target == track) {
+                    this.setValue(this.translateXToVal(e.offsetX));
+                }
+            };
             const dragEnd = (e) => {
                 if (active && dragValue !== null) {
                     this.setValue(dragValue);
@@ -123,16 +144,17 @@
                 const thumbOffset = thumb.offsetWidth / 2;
                 thumbX = Math.min(Math.max(thumbX, -thumbOffset), track.offsetWidth - thumbOffset);
                 dragValue = this.translateXToVal(thumbX + (thumbOffset / 2));
+                onDrag(dragValue, this);
                 if (snap)
                     return this.snapThumb(dragValue);
                 thumb.style.left = `${thumbX}px`;
                 this.highlightLabel(dragValue);
             };
-            container.addEventListener("touchstart", dragStart, true);
-            container.addEventListener("touchend", dragEnd, true);
-            container.addEventListener("touchmove", drag, true);
+            window.addEventListener("touchstart", dragStart, true);
+            window.addEventListener("touchend", dragEnd, true);
+            window.addEventListener("touchmove", drag, true);
             window.addEventListener("mousedown", dragStart, false);
-            [window, container].forEach(ele => { addEventListener("mouseup", dragEnd, false); });
+            window.addEventListener("mouseup", dragEnd, false);
             window.addEventListener("mousemove", drag, true);
             return this;
         }
@@ -157,9 +179,10 @@
             this.notchedTick(sliderValue).label?.classList.add('active');
         }
         setValue(sliderValue) {
-            const { range: { min, max } } = this;
+            const { range: { min, max }, onUpdated } = this;
             this.value = Math.min(Math.max(sliderValue, min), max);
             this.snapThumb(this.value);
+            onUpdated(this.value, this);
         }
     }
     window.sliderBar = sliderBar || {};

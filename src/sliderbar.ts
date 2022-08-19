@@ -6,7 +6,9 @@ type Config = {
     }
     range: Range,
     value: number,
-    snap: boolean
+    snap: boolean,
+    onDrag?: Function,
+    onUpdated?: Function
 }
 
 type Range = {
@@ -30,17 +32,21 @@ class sliderBar {
     ticks: Array<Tick> = [];
     value: number;
     snap: boolean;
+    onDrag: Function;
+    onUpdated: Function;
 
     constructor(config: Config) {
-        const { range, domElements: { container, track, thumb }, value, snap } = config;
+        const { range, domElements: { container, track, thumb }, value, snap, onDrag, onUpdated } = this.validateDefaults(config);
         
         Object.assign(this,{
             container,
             track,
             thumb,
             range,
-            value: value ?? range.min,
-            snap: snap ?? true
+            value,
+            snap,
+            onDrag,
+            onUpdated
         });
 
         new Promise((res) => {
@@ -50,8 +56,40 @@ class sliderBar {
         }).then(() => {
             // then drag events and defaults
             this.thumbEvents().snapThumb(this.value);
+        }).catch((err) => {
+            throw new Error(err);
+        })
+
+    }
+
+    // define defaults and validate range values... 
+    // insure steps don't exceed range & min isn't out of bounds
+    validateDefaults(config) {
+        const { domElements, range, value, snap, onDrag, onUpdated } = config;
+
+        //insure DOM elements exist in config & HTML
+        const domElementDefaults = {
+            container: domElements?.container ?? document.querySelector('.container'),
+            track: domElements?.track ?? document.querySelector('.track'),
+            thumb: domElements?.thumb ?? document.querySelector('.thumb')
+        };
+        
+        Object.entries(domElementDefaults).forEach(ele => {
+            if (!ele[1]) throw new Error(`domElement for ${ele[0]} not found`);
         });
 
+        return {
+            domElements: domElementDefaults,
+            range: {
+                min: range?.min ?? 0,
+                max: range?.max ?? 10,
+                step: (range?.step && range?.step < range?.max - range?.min ? range?.step : null) ?? 1
+            },
+            value: (value >= range?.min ? value : null) ?? range?.min ?? 0,
+            snap: snap ?? true,
+            onDrag: onDrag ?? function() { return; },
+            onUpdated: onUpdated ?? function() { return; }
+        }
     }
 
     // create ticks & labels and add to DOM
@@ -81,11 +119,6 @@ class sliderBar {
             track.appendChild(tickEle);
             const tickLeft = tick.left - (tickEle.offsetWidth / 2);
             tickEle.style.marginLeft = `${tickLeft}px`;
-
-            // assign click events to ticks
-            tickEle.addEventListener('mousedown',() => {
-                this.setValue(tick.value);
-            });
 
             // create labels
             const labelEle = document.createElement('div');
@@ -130,7 +163,7 @@ class sliderBar {
 
     thumbEvents() {
 
-        const { container, track, thumb, snap } = this;
+        const { container, track, thumb, snap, onDrag } = this;
 
         // WCAG compliance, arrow key listeners
         let containerFocus = false;
@@ -149,24 +182,22 @@ class sliderBar {
         });
 
         let active = false;
-        // click on track directly
-        track.addEventListener('mousedown',(e) => {
-            if (e.target != e.currentTarget) return;
-            active = true;
-            this.setValue(this.translateXToVal(e.offsetX));
-        });
-
-        // click on container 
-        container.addEventListener('mousedown',(e) => {
-            if (e.target != e.currentTarget) return;
-            active = true;
-            this.setValue(this.translateXToVal(e.offsetX - thumb.offsetWidth));
-        });
-
+        
         // thumb drag handling
         let dragValue: any = null;
-        const dragStart   = (e) => { active = [thumb, container, track].includes(e.target) || e.target.classList.contains('tick'); };
-        const dragEnd     = (e) => { 
+        const dragStart   = (e) => { 
+            active = [thumb, container, track].includes(e.target) || e.target.classList.contains('tick'); 
+
+            if (e.target == container) {
+                this.setValue(this.translateXToVal(e.offsetX - thumb.offsetWidth));
+            }
+
+            if (e.target == track) {
+                this.setValue(this.translateXToVal(e.offsetX));
+            }
+        }
+
+        const dragEnd = (e) => { 
             
             // snap value to nearest tick 
             if (active && dragValue !== null) {
@@ -177,7 +208,7 @@ class sliderBar {
             // restore defaults
             if (!snap) thumb.classList.add('smooth');
             active = false; 
-        }
+        };
 
         const drag = (e) => {
             if (!active) return;
@@ -194,23 +225,26 @@ class sliderBar {
             // assign value as dragged; label highlights on drag
             // TODO: better precision by setting value when left or right of thumb hits tick boundary
             dragValue = this.translateXToVal(thumbX + (thumbOffset / 2));
+            
+            
+            onDrag(dragValue, this);
 
             // move thumb on drag
-
             if (snap) return this.snapThumb(dragValue);
-            
+     
             thumb.style.left = `${thumbX}px`;
             this.highlightLabel(dragValue);
 
-        }
+
+        };
 
         // assign listeners, mobile and web
-        container.addEventListener("touchstart", dragStart, true);
-        container.addEventListener("touchend", dragEnd, true);
-        container.addEventListener("touchmove", drag, true);
+        window.addEventListener("touchstart", dragStart, true);
+        window.addEventListener("touchend", dragEnd, true);
+        window.addEventListener("touchmove", drag, true);
 
         window.addEventListener("mousedown", dragStart, false);
-        [window,container].forEach(ele => { addEventListener("mouseup", dragEnd, false) });
+        window.addEventListener("mouseup", dragEnd, false);
         window.addEventListener("mousemove", drag, true);
 
         return this;
@@ -249,11 +283,12 @@ class sliderBar {
 
     // can be called from elsewhere outside of class
     setValue(sliderValue: number) {
-        const { range: { min, max } } = this;
+        const { range: { min, max }, onUpdated } = this;
 
         // constrain value to range
         this.value = Math.min(Math.max(sliderValue, min), max);
         this.snapThumb(this.value);
+        onUpdated(this.value, this);
     }
 
 }

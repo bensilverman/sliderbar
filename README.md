@@ -38,17 +38,23 @@ const thumb = document.querySelector('.thumb');
 
 const sliderBar = new sliderBar({
     domElements: {
-        container
-        track
-        thumb 
+        container, /* container DOM element [default = document.querySelector('.container')] */
+        track, /* track DOM element [default = document.querySelector('.track')] */
+        thumb /* thumb DOM elements [default = document.querySelector('.thumb')] */
     },
     range: {
-        min: 0, /* left-most numeric value */
-        max: 10, /* right-most numeric value */
-        step: 1 /* numeric tick interval */
+        min: 0, /* left-most numeric value [default = 0] */
+        max: 10, /* right-most numeric value, [default = 10] */
+        step: 1 /* numeric tick interval, [default = 1] */
     },
-    value: 0, /* default value of slider */
-    snap: true /* if false, slider moves in a fluid motion instead of snapped to tick */  
+    value: 0, /* default value of slider [default = range.min] */
+    snap: true /* if false, slider moves in a fluid motion instead of snapped to tick [default = true]*/,
+    onDrag: (val, slider) => { 
+        console.log(`drag value is ${val}`); 
+    }, /* callback returning current drag value [optional] */
+    onUpdated: (val, slider) => {
+        console.log(`updated value is ${val}`);
+    } /* callback returns value when sliderbar updated from UI [optional] */
 });
 
 
